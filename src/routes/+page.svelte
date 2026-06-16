@@ -102,7 +102,9 @@
 										class={row.significantlyAboveHumans
 											? "score score-strong"
 											: "score"}
-										>{formatDelta(row.beta_coefficient)}</span
+										>{formatDelta(
+											row.beta_coefficient,
+										)}</span
 									>
 									<span class="score-detail"
 										>SE {formatStandardError(row.se)}</span
@@ -380,16 +382,19 @@
 
 	.chart-tabs {
 		display: inline-flex;
-		padding: 0.2rem;
+		padding: 0.15rem;
 		border: 1px solid var(--border);
+		border-radius: 10rem;
 		background: var(--surface);
 
 		button {
-			padding: 0.45rem 0.85rem;
+			padding: 0.3rem 0.65rem;
 			border: 0;
+			border-radius: 10rem;
 			background: transparent;
 			color: var(--muted);
 			font: inherit;
+			font-size: 0.85rem;
 			font-weight: 700;
 			cursor: pointer;
 		}
