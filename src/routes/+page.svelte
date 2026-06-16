@@ -366,6 +366,11 @@
 		vertical-align: top;
 	}
 
+	th + th,
+	td + td {
+		border-inline-start: 1px solid var(--border);
+	}
+
 	thead th {
 		background: var(--surface-muted);
 		font-size: 0.8rem;
