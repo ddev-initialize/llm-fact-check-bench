@@ -26,6 +26,7 @@ export type BenchmarkRow = IccSearchResult & {
 	displayName: string;
 	confidenceLabel: string;
 	pValueLabel: string;
+	simpleBarWidth: string;
 	significantlyAboveHumans: boolean;
 };
 
@@ -87,6 +88,16 @@ function pValueLabel(value: number): string {
 	return fixed(value, 3).replace(/^0/, '');
 }
 
+const maxDelta = Math.max(...iccSearchResults.map((result) => result.beta_coefficient));
+
+function simpleBarWidth(value: number): string {
+	if (maxDelta <= 0) {
+		return '0%';
+	}
+
+	return `${Math.max(4, (value / maxDelta) * 100).toFixed(1)}%`;
+}
+
 function xPosition(value: number, xMin: number, xMax: number): number {
 	const plotWidth = CHART_WIDTH - CHART_LEFT - CHART_RIGHT;
 	return CHART_LEFT + ((value - xMin) / (xMax - xMin)) * plotWidth;
@@ -112,6 +123,7 @@ export const benchmarkRows: BenchmarkRow[] = [...iccSearchResults]
 		displayName: displayName(result.model),
 		confidenceLabel: `${signedFixed(result.confidence_interval_lower, 3)} to ${signedFixed(result.confidence_interval_upper, 3)}`,
 		pValueLabel: pValueLabel(result.pval),
+		simpleBarWidth: simpleBarWidth(result.beta_coefficient),
 		significantlyAboveHumans: result.confidence_interval_lower > 0
 	}));
 

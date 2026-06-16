@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
+	import { onMount } from "svelte";
 	import {
 		benchmarkRows,
 		chartGeometry,
@@ -7,6 +8,20 @@
 		formatHeterogeneity,
 		formatStandardError,
 	} from "$lib/benchmark";
+
+	type ChartView = "simple" | "interval";
+
+	let chartView = $state<ChartView>("simple");
+
+	function selectChartView(view: ChartView): void {
+		chartView = view;
+	}
+
+	onMount(() => {
+		if (window.matchMedia("(min-width: 48rem)").matches) {
+			chartView = "interval";
+		}
+	});
 </script>
 
 <svelte:head>
@@ -40,111 +55,194 @@
 		</div>
 
 		<figure class="chart-figure">
-			<div
-				class="chart-scroll"
-				role="region"
-				aria-label="Scrollable benchmark chart"
-			>
-				<svg
-					class="benchmark-chart"
-					role="img"
-					aria-labelledby="chart-title chart-description"
-					viewBox={`0 0 ${chartGeometry.width} ${chartGeometry.height}`}
-				>
-					<title id="chart-title"
-						>Meta-analytic ICC difference by model</title
+			<div class="chart-view-controls">
+				<div class="chart-tabs" role="group" aria-label="Chart view">
+					<button
+						class:active={chartView === "simple"}
+						type="button"
+						aria-pressed={chartView === "simple"}
+						onclick={() => selectChartView("simple")}
 					>
-					<desc id="chart-description">
-						Horizontal interval plot of model benchmark scores.
-						Higher values indicate more agreement with professional
-						fact-checkers relative to agreement among humans.
-					</desc>
+						Simple
+					</button>
+					<button
+						class:active={chartView === "interval"}
+						type="button"
+						aria-pressed={chartView === "interval"}
+						onclick={() => selectChartView("interval")}
+					>
+						Interval
+					</button>
+				</div>
+			</div>
 
-					{#each chartGeometry.ticks as tick (tick.label)}
-						<line
-							class={tick.value === 0
-								? "grid-line zero-line"
-								: "grid-line"}
-							x1={tick.x}
-							x2={tick.x}
-							y1={chartGeometry.plotTop}
-							y2={chartGeometry.plotBottom}
-						/>
+			<div
+				id="simple-chart-panel"
+				class="chart-panel"
+				hidden={chartView !== "simple"}
+			>
+				<div class="leaderboard-chart">
+					<ol
+						class="leaderboard-list"
+						aria-label="Simple benchmark leaderboard"
+					>
+						{#each benchmarkRows as row (row.model)}
+							<li class="leaderboard-row">
+								<span class="rank-badge">{row.rank}</span>
+								<div class="leaderboard-model">
+									<span class="model-name"
+										>{row.displayName}</span
+									>
+									<span class="confidence"
+										>95% CI {row.confidenceLabel}</span
+									>
+								</div>
+								<div class="leaderboard-score">
+									<span
+										class={row.significantlyAboveHumans
+											? "score score-strong"
+											: "score"}
+										>{formatDelta(row.beta_coefficient)}</span
+									>
+									<span class="score-detail"
+										>SE {formatStandardError(row.se)}</span
+									>
+								</div>
+								<div class="bar-track" aria-hidden="true">
+									<span
+										class={row.significantlyAboveHumans
+											? "bar-fill bar-fill-strong"
+											: "bar-fill"}
+										style={`inline-size: ${row.simpleBarWidth}`}
+									></span>
+								</div>
+							</li>
+						{/each}
+					</ol>
+				</div>
+			</div>
+
+			<div
+				id="interval-chart-panel"
+				class="chart-panel"
+				hidden={chartView !== "interval"}
+			>
+				<div
+					class="chart-scroll"
+					role="region"
+					aria-label="Scrollable benchmark chart"
+				>
+					<svg
+						class="benchmark-chart"
+						role="img"
+						aria-labelledby="chart-title chart-description"
+						viewBox={`0 0 ${chartGeometry.width} ${chartGeometry.height}`}
+					>
+						<title id="chart-title"
+							>Meta-analytic ICC difference by model</title
+						>
+						<desc id="chart-description">
+							Horizontal interval plot of model benchmark scores.
+							Higher values indicate more agreement with
+							professional fact-checkers relative to agreement
+							among humans.
+						</desc>
+
+						{#each chartGeometry.ticks as tick (tick.label)}
+							<line
+								class={tick.value === 0
+									? "grid-line zero-line"
+									: "grid-line"}
+								x1={tick.x}
+								x2={tick.x}
+								y1={chartGeometry.plotTop}
+								y2={chartGeometry.plotBottom}
+							/>
+							<text
+								class="tick-label"
+								x={tick.x}
+								y={chartGeometry.tickLabelY}
+								text-anchor="middle"
+							>
+								{tick.label}
+							</text>
+						{/each}
+
+						{#each chartGeometry.points as point (point.row.model)}
+							<line
+								class="row-guide"
+								x1={chartGeometry.left}
+								x2={chartGeometry.width - chartGeometry.right}
+								y1={point.y}
+								y2={point.y}
+							/>
+							<text
+								class="model-label"
+								x={chartGeometry.left - 14}
+								y={point.y + 5}
+								text-anchor="end"
+							>
+								{point.row.displayName}
+							</text>
+							<line
+								class="interval"
+								x1={point.xLower}
+								x2={point.xUpper}
+								y1={point.y}
+								y2={point.y}
+							/>
+							<line
+								class="cap"
+								x1={point.xLower}
+								x2={point.xLower}
+								y1={point.y - 7}
+								y2={point.y + 7}
+							/>
+							<line
+								class="cap"
+								x1={point.xUpper}
+								x2={point.xUpper}
+								y1={point.y - 7}
+								y2={point.y + 7}
+							/>
+							<circle
+								class={point.row.significantlyAboveHumans
+									? "estimate significant"
+									: "estimate"}
+								cx={point.x}
+								cy={point.y}
+								r="8"
+							/>
+						{/each}
+
 						<text
-							class="tick-label"
-							x={tick.x}
-							y={chartGeometry.tickLabelY}
+							class="axis-label"
+							x={(chartGeometry.left +
+								chartGeometry.width -
+								chartGeometry.right) /
+								2}
+							y={chartGeometry.axisLabelY}
 							text-anchor="middle"
 						>
-							{tick.label}
+							Meta-analytic ICC difference (LLM-human ICC -
+							inter-human ICC)
 						</text>
-					{/each}
-
-					{#each chartGeometry.points as point (point.row.model)}
-						<line
-							class="row-guide"
-							x1={chartGeometry.left}
-							x2={chartGeometry.width - chartGeometry.right}
-							y1={point.y}
-							y2={point.y}
-						/>
-						<text
-							class="model-label"
-							x={chartGeometry.left - 14}
-							y={point.y + 5}
-							text-anchor="end"
-						>
-							{point.row.displayName}
-						</text>
-						<line
-							class="interval"
-							x1={point.xLower}
-							x2={point.xUpper}
-							y1={point.y}
-							y2={point.y}
-						/>
-						<line
-							class="cap"
-							x1={point.xLower}
-							x2={point.xLower}
-							y1={point.y - 7}
-							y2={point.y + 7}
-						/>
-						<line
-							class="cap"
-							x1={point.xUpper}
-							x2={point.xUpper}
-							y1={point.y - 7}
-							y2={point.y + 7}
-						/>
-						<circle
-							class={point.row.significantlyAboveHumans
-								? "estimate significant"
-								: "estimate"}
-							cx={point.x}
-							cy={point.y}
-							r="8"
-						/>
-					{/each}
-
-					<text
-						class="axis-label"
-						x={(chartGeometry.left +
-							chartGeometry.width -
-							chartGeometry.right) /
-							2}
-						y={chartGeometry.axisLabelY}
-						text-anchor="middle"
-					>
-						Meta-analytic ICC difference (LLM-human ICC -
-						inter-human ICC)
-					</text>
-				</svg>
+					</svg>
+				</div>
 			</div>
-			<figcaption>
-				Points show model estimates; horizontal bars show 95% confidence
-				intervals. Green points have intervals fully above zero.
-			</figcaption>
+
+			{#if chartView === "simple"}
+				<figcaption>
+					Bars are scaled to the strongest result. Green values have
+					95% confidence intervals fully above zero.
+				</figcaption>
+			{:else}
+				<figcaption>
+					Points show model estimates; horizontal bars show 95%
+					confidence intervals. Green points have intervals fully
+					above zero.
+				</figcaption>
+			{/if}
 		</figure>
 	</section>
 
@@ -274,6 +372,128 @@
 		}
 	}
 
+	.chart-view-controls {
+		display: flex;
+		justify-content: end;
+		margin-block-end: 0.75rem;
+	}
+
+	.chart-tabs {
+		display: inline-flex;
+		padding: 0.2rem;
+		border: 1px solid var(--border);
+		background: var(--surface);
+
+		button {
+			padding: 0.45rem 0.85rem;
+			border: 0;
+			background: transparent;
+			color: var(--muted);
+			font: inherit;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		button.active {
+			background: var(--text);
+			color: var(--background);
+		}
+
+		button:focus-visible {
+			outline: 2px solid var(--accent);
+			outline-offset: 2px;
+		}
+	}
+
+	.chart-panel[hidden] {
+		display: none;
+	}
+
+	.leaderboard-chart {
+		border: 1px solid var(--border);
+		background: var(--surface);
+	}
+
+	.leaderboard-list {
+		display: grid;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.leaderboard-row {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		gap: 0.5rem 0.85rem;
+		align-items: center;
+		padding: 0.9rem;
+		border-block-start: 1px solid var(--border);
+	}
+
+	.leaderboard-row:first-child {
+		border-block-start: 0;
+	}
+
+	.rank-badge {
+		display: grid;
+		place-items: center;
+		inline-size: 2rem;
+		block-size: 2rem;
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.leaderboard-model,
+	.leaderboard-score {
+		display: grid;
+		gap: 0.1rem;
+		min-inline-size: 0;
+	}
+
+	.model-name {
+		overflow-wrap: anywhere;
+		font-weight: 700;
+	}
+
+	.confidence,
+	.score-detail {
+		color: var(--muted);
+		font-size: 0.82rem;
+	}
+
+	.leaderboard-score {
+		justify-items: end;
+		text-align: end;
+	}
+
+	.score {
+		font-variant-numeric: tabular-nums;
+		font-weight: 700;
+	}
+
+	.score-strong {
+		color: var(--success);
+	}
+
+	.bar-track {
+		grid-column: 2 / -1;
+		overflow: clip;
+		block-size: 0.42rem;
+		background: var(--surface-muted);
+	}
+
+	.bar-fill {
+		display: block;
+		block-size: 100%;
+		background: var(--muted);
+	}
+
+	.bar-fill-strong {
+		background: var(--success);
+	}
+
 	.chart-scroll,
 	.table-scroll {
 		overflow: auto;
@@ -395,14 +615,8 @@
 
 	@media (max-width: 42rem) {
 		.page-shell {
-			inline-size: min(100% - 1rem, 72rem);
+			inline-size: min(100% - 1.25rem, 72rem);
 			padding-block-start: 1.5rem;
-		}
-
-		.chart-scroll,
-		.table-scroll {
-			margin-inline: -0.5rem;
-			border-inline: 0;
 		}
 	}
 
