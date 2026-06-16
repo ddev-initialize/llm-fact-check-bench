@@ -367,6 +367,7 @@
 	}
 
 	th + th,
+	th + td,
 	td + td {
 		border-inline-start: 1px solid var(--border);
 	}
