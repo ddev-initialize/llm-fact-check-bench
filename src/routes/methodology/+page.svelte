@@ -30,10 +30,12 @@
 	}
 
 	.eyebrow {
+		justify-self: center;
 		margin: 0;
 		color: var(--muted);
 		font-size: 0.875rem;
 		font-weight: 700;
+		text-align: center;
 		text-transform: uppercase;
 	}
 
@@ -43,8 +45,11 @@
 	}
 
 	h1 {
+		justify-self: center;
 		font-size: 3rem;
 		line-height: 1;
+		text-align: center;
+		text-wrap: balance;
 	}
 
 	p {
