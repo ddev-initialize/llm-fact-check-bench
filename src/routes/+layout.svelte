@@ -1,52 +1,89 @@
 <script lang="ts">
-	import { resolve } from "$app/paths";
-	import favicon from "$lib/assets/favicon.svg";
-	import type { Snippet } from "svelte";
+	import { page } from '$app/state';
+	import DashboardHeader from '$lib/components/DashboardHeader.svelte';
+	import type { View } from '$lib/dashboard';
+	import favicon from '$lib/assets/favicon.svg';
+	import type { Snippet } from 'svelte';
 
 	interface Props {
 		children: Snippet;
 	}
 
 	let { children }: Props = $props();
+	let view = $derived.by<View>(() => {
+		if (page.route.id === '/datasets/[slug]') {
+			return 'dataset';
+		}
+
+		if (page.route.id === '/datasets') {
+			return 'datasets';
+		}
+
+		return 'overview';
+	});
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+		rel="stylesheet"
+	/>
 </svelte:head>
 
-<header class="site-header">
-	<nav aria-label="Main navigation" class="site-nav">
-		<a class="brand" href={resolve("/")}>LLM Fact-Check Bench</a>
-		<a href={resolve("/methodology")}>Methodology</a>
-	</nav>
-</header>
+<div class="dashboard-shell">
+	<DashboardHeader {view} />
 
-{@render children()}
+	<main class="page-content">
+		{@render children()}
+	</main>
+</div>
 
 <style>
 	:global(:root) {
 		color-scheme: light dark;
-		--background: light-dark(#fbfaf7, #111315);
-		--surface: light-dark(#ffffff, #171a1f);
-		--surface-muted: light-dark(#f1efea, #20242b);
-		--text: light-dark(#1c1c1a, #f3f1ec);
-		--muted: light-dark(#62625c, #b9b6ad);
-		--border: light-dark(#ddd8ce, #353941);
-		--accent: light-dark(#225ea8, #8bbcff);
-		--accent-strong: light-dark(#143f72, #b8d6ff);
-		--success: light-dark(#16713a, #71d894);
-		font-family:
-			Inter,
-			ui-sans-serif,
-			system-ui,
-			-apple-system,
-			BlinkMacSystemFont,
-			"Segoe UI",
-			sans-serif;
-		line-height: 1.5;
-		background: var(--background);
-		color: var(--text);
+		--bg: #fbfbf9;
+		--panel: #ffffff;
+		--panel-subtle: #f7f8f4;
+		--ink: #15201b;
+		--ink-soft: #586057;
+		--muted: #8a938a;
+		--line: #e6e7e1;
+		--line-soft: #eceee8;
+		--accent: #1e7a52;
+		--accent-soft: #cfe8dc;
+		--ci: #c6cbc2;
+		--dot-muted: #b4bbb0;
+		--hover: #f1f3ee;
+		--shadow-color: rgba(21, 32, 27, 0.04);
+		--shadow-color-tight: rgba(21, 32, 27, 0.03);
+		font-family: 'IBM Plex Sans', system-ui, sans-serif;
+		background: var(--bg);
+		color: var(--ink);
 		scrollbar-gutter: stable;
+		accent-color: var(--accent);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:global(:root) {
+			--bg: #101411;
+			--panel: #171d19;
+			--panel-subtle: #121713;
+			--ink: #f0f4ed;
+			--ink-soft: #b9c4bb;
+			--muted: #879488;
+			--line: #2b342d;
+			--line-soft: #222a24;
+			--accent: #73d39b;
+			--accent-soft: rgba(115, 211, 155, 0.18);
+			--ci: #647167;
+			--dot-muted: #7e887e;
+			--hover: #202820;
+			--shadow-color: rgba(0, 0, 0, 0.28);
+			--shadow-color-tight: rgba(0, 0, 0, 0.2);
+		}
 	}
 
 	:global(*) {
@@ -55,17 +92,23 @@
 
 	:global(body) {
 		margin: 0;
-		background: var(--background);
-		color: var(--text);
+		background: var(--bg);
+		color: var(--ink);
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
 	}
 
-	:global(a) {
-		color: var(--accent);
-		text-underline-offset: 0.18em;
+	:global(::selection) {
+		background: var(--accent-soft);
 	}
 
-	:global(a:hover) {
-		color: var(--accent-strong);
+	:global(button),
+	:global(input) {
+		font: inherit;
+	}
+
+	:global(button) {
+		cursor: pointer;
 	}
 
 	:global(:focus-visible) {
@@ -73,25 +116,17 @@
 		outline-offset: 3px;
 	}
 
-	.site-header {
-		border-block-end: 1px solid var(--border);
-		background: color-mix(in srgb, var(--background) 88%, transparent);
+	.dashboard-shell {
+		min-block-size: 100dvh;
 	}
 
-	.site-nav {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.75rem 1.25rem;
-		inline-size: min(100% - 2rem, 72rem);
+	.page-content {
+		inline-size: min(100%, 1080px);
 		margin-inline: auto;
-		padding-block: 0.85rem;
+		padding: 44px 28px 110px;
 
-		.brand {
-			margin-inline-end: auto;
-			color: var(--text);
-			font-weight: 700;
-			text-decoration: none;
+		@media (max-width: 768px) {
+			padding-inline: 20px;
 		}
 	}
 </style>
