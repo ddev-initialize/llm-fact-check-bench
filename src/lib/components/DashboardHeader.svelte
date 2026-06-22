@@ -114,9 +114,13 @@
 				border-color: var(--ink);
 				background: var(--ink);
 				color: var(--bg);
+
+				&:hover {
+					background: var(--ink);
+				}
 			}
 
-			&:hover {
+			&:hover:not(.active) {
 				background: var(--hover);
 			}
 		}

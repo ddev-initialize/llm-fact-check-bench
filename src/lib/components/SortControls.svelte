@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SortMode } from '$lib/dashboard';
+	import type { SortMode } from "$lib/dashboard";
 
 	interface Props {
 		sortMode: SortMode;
@@ -10,21 +10,21 @@
 	let { sortMode, onSort, compact = false }: Props = $props();
 </script>
 
-<div class={{ 'control-row': true, compact }} aria-label="Sort leaderboard">
+<div class={{ "control-row": true, compact }} aria-label="Sort leaderboard">
 	<span>Sort by</span>
 	<button
 		type="button"
-		class={{ active: sortMode === 'delta' }}
-		aria-pressed={sortMode === 'delta'}
-		onclick={() => onSort('delta')}
+		class={{ active: sortMode === "delta" }}
+		aria-pressed={sortMode === "delta"}
+		onclick={() => onSort("delta")}
 	>
 		Δ ICC
 	</button>
 	<button
 		type="button"
-		class={{ active: sortMode === 'cost' }}
-		aria-pressed={sortMode === 'cost'}
-		onclick={() => onSort('cost')}
+		class={{ active: sortMode === "cost" }}
+		aria-pressed={sortMode === "cost"}
+		onclick={() => onSort("cost")}
 	>
 		Cost
 	</button>
@@ -34,6 +34,7 @@
 	.control-row {
 		display: flex;
 		align-items: center;
+		justify-content: end;
 		gap: 9px;
 		margin-block-end: 26px;
 
@@ -42,7 +43,7 @@
 		}
 
 		span {
-			font-family: 'IBM Plex Mono', ui-monospace, monospace;
+			font-family: "IBM Plex Mono", ui-monospace, monospace;
 			font-size: 10.5px;
 			letter-spacing: 0.1em;
 			text-transform: uppercase;
@@ -65,9 +66,13 @@
 				border-color: var(--ink);
 				background: var(--ink);
 				color: var(--bg);
+
+				&:hover {
+					background: var(--ink);
+				}
 			}
 
-			&:hover {
+			&:hover:not(.active) {
 				background: var(--hover);
 			}
 		}
