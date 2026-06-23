@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import DashboardHeader from '$lib/components/DashboardHeader.svelte';
 	import type { View } from '$lib/dashboard';
-	import favicon from '$lib/assets/favicon.svg';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -10,6 +10,7 @@
 	}
 
 	let { children }: Props = $props();
+	const faviconPath = `${base}/favicons`;
 	let view = $derived.by<View>(() => {
 		if (page.route.id === '/datasets/[slug]') {
 			return 'dataset';
@@ -24,7 +25,14 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={`${faviconPath}/favicon.ico`} sizes="any" />
+	<link rel="icon" href={`${faviconPath}/favicon.svg`} type="image/svg+xml" />
+	<link rel="icon" href={`${faviconPath}/favicon-32.png`} type="image/png" sizes="32x32" />
+	<link rel="icon" href={`${faviconPath}/favicon-16.png`} type="image/png" sizes="16x16" />
+	<link rel="apple-touch-icon" href={`${faviconPath}/apple-touch-icon.png`} />
+	<link rel="manifest" href={`${faviconPath}/site.webmanifest`} />
+	<meta name="theme-color" content="#fcfbf9" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#101411" media="(prefers-color-scheme: dark)" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link

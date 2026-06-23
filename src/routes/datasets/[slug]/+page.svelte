@@ -18,4 +18,10 @@
 </svelte:head>
 
 <ScopeBanner dataset={data.dataset} />
-<BenchmarkDashboard title={data.dataset.name} {description} view="dataset" showIntro={false} />
+<BenchmarkDashboard
+	title={data.dataset.name}
+	{description}
+	view="dataset"
+	datasetName={data.dataset.name}
+	showIntro={false}
+/>

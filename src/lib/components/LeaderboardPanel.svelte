@@ -1,7 +1,12 @@
 <script lang="ts">
-	import { deltaPosition, toPercent, type ForestRow, type View } from '$lib/dashboard';
-	import SortControls from '$lib/components/SortControls.svelte';
-	import type { SortMode } from '$lib/dashboard';
+	import {
+		deltaPosition,
+		toPercent,
+		type ForestRow,
+		type View,
+	} from "$lib/dashboard";
+	import SortControls from "$lib/components/SortControls.svelte";
+	import type { SortMode } from "$lib/dashboard";
 
 	interface Props {
 		rows: ForestRow[];
@@ -18,26 +23,38 @@
 		<div>
 			<h2 id="leaderboard-title">Leaderboard</h2>
 			<p>
-				{view === 'dataset'
-					? 'Models by agreement gain on this dataset.'
+				{view === "dataset"
+					? "Models by agreement gain on this dataset."
 					: "Each model's ICC difference (LLM − human). Right of parity means it agrees with fact-checkers more than they agree with each other."}
 			</p>
 		</div>
-		<span>Δ ICC · 95% CI</span>
 	</div>
 
-	<SortControls {sortMode} {onSort} compact />
+	<div class="chart-toolbar">
+		<div class="legend" aria-hidden="true">
+			<span><i class="legend-dot"></i> Meta-analytic Δ</span>
+			<span><i class="legend-line"></i> Parity (Δ = 0)</span>
+		</div>
+		<SortControls {sortMode} {onSort} compact />
+	</div>
 
-	<div class="legend" aria-hidden="true">
-		<span><i class="legend-dot"></i> Meta-analytic Δ</span>
-		<span><i class="legend-line"></i> Parity (Δ = 0)</span>
+	<div class="chart-label" aria-hidden="true">
+		<div></div>
+		<div></div>
+		<div class="estimate-label">
+			<span>Δ ICC</span>
+			<span>95% CI</span>
+		</div>
 	</div>
 
 	<div class="forest-chart">
 		<div class="parity-grid" aria-hidden="true">
 			<div></div>
 			<div class="parity-track">
-				<span class="parity-line" style:--left={toPercent(deltaPosition(0))}></span>
+				<span
+					class="parity-line"
+					style:--left={toPercent(deltaPosition(0))}
+				></span>
 			</div>
 			<div></div>
 		</div>
@@ -45,16 +62,24 @@
 			<div class="forest-row">
 				<div class="model-name">{row.name}</div>
 				<div class="interval-track">
-					<span class="ci-line" style:--left={row.ciLeft} style:--width={row.ciWidth}></span>
+					<span
+						class="ci-line"
+						style:--left={row.ciLeft}
+						style:--width={row.ciWidth}
+					></span>
 					<span class="ci-cap" style:--left={row.ciLeft}></span>
-					<span class="ci-cap" style:--left={`calc(${row.ciLeft} + ${row.ciWidth})`}></span>
+					<span
+						class="ci-cap"
+						style:--left={`calc(${row.ciLeft} + ${row.ciWidth})`}
+					></span>
 					<span
 						class={{ point: true, hollow: row.crossesParity }}
 						style:--left={row.pointLeft}
 					></span>
 				</div>
 				<div class="estimate">
-					{row.estimate} <span>{row.interval}</span>
+					<span>{row.estimate}</span>
+					<span>{row.interval}</span>
 				</div>
 			</div>
 		{/each}
@@ -64,14 +89,12 @@
 		<div></div>
 		<div class="axis-ticks">
 			{#each [-0.06, 0, 0.06, 0.12, 0.18] as tick (tick)}
-				<span style:--left={toPercent(deltaPosition(tick))}>{tick.toFixed(2)}</span>
+				<span style:--left={toPercent(deltaPosition(tick))}
+					>{tick.toFixed(2)}</span
+				>
 			{/each}
 		</div>
 		<div></div>
-	</div>
-	<div class="axis-caption" aria-hidden="true">
-		<span>← favors humans</span>
-		<span>favors LLM →</span>
 	</div>
 </section>
 
@@ -92,11 +115,11 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: 12px;
-		margin-block-end: 20px;
+		margin-block-end: 12px;
 
 		h2 {
 			margin: 0;
-			font-family: 'Newsreader', ui-serif, Georgia, serif;
+			font-family: "Newsreader", ui-serif, Georgia, serif;
 			font-size: 20px;
 			font-weight: 600;
 			letter-spacing: 0;
@@ -109,21 +132,54 @@
 			font-size: 13px;
 			line-height: 1.5;
 		}
+	}
 
-		> span {
-			font-family: 'IBM Plex Mono', ui-monospace, monospace;
-			font-size: 10.5px;
-			letter-spacing: 0.1em;
-			text-transform: uppercase;
-			color: var(--muted);
+	.chart-toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 20px;
+		margin-block: 8px 18px;
+
+		:global(.control-row) {
+			margin-block: 0;
 		}
+	}
+
+	.chart-label,
+	.forest-row,
+	.axis-row {
+		display: grid;
+		grid-template-columns: 158px minmax(0, 1fr) 154px;
+		gap: 16px;
+	}
+
+	.chart-label {
+		margin-block-end: 6px;
+		color: var(--muted);
+		font-family: "IBM Plex Mono", ui-monospace, monospace;
+		font-size: 10.5px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.estimate-label,
+	.estimate {
+		display: grid;
+		grid-template-columns: 42px minmax(0, 1fr);
+		gap: 10px;
+		text-align: end;
+	}
+
+	.estimate-label span,
+	.estimate span {
+		white-space: nowrap;
 	}
 
 	.legend {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 20px;
-		margin-block-end: 20px;
 		color: var(--ink-soft);
 		font-size: 12px;
 
@@ -157,7 +213,7 @@
 		inset-block: 0;
 		inset-inline: 0;
 		display: grid;
-		grid-template-columns: 158px minmax(0, 1fr) 124px;
+		grid-template-columns: 158px minmax(0, 1fr) 154px;
 		gap: 16px;
 		pointer-events: none;
 	}
@@ -171,13 +227,6 @@
 		inset-block: 0;
 		inset-inline-start: var(--left);
 		border-inline-start: 1.5px dotted var(--ci);
-	}
-
-	.forest-row,
-	.axis-row {
-		display: grid;
-		grid-template-columns: 158px minmax(0, 1fr) 124px;
-		gap: 16px;
 	}
 
 	.forest-row {
@@ -239,13 +288,15 @@
 
 	.estimate {
 		color: var(--ink);
-		font-family: 'IBM Plex Mono', ui-monospace, monospace;
+		font-family: "IBM Plex Mono", ui-monospace, monospace;
 		font-size: 12px;
-		text-align: end;
-		white-space: nowrap;
 
 		span {
 			color: var(--muted);
+		}
+
+		span:first-child {
+			color: var(--ink);
 		}
 	}
 
@@ -261,19 +312,10 @@
 			position: absolute;
 			inset-inline-start: var(--left);
 			color: var(--muted);
-			font-family: 'IBM Plex Mono', ui-monospace, monospace;
+			font-family: "IBM Plex Mono", ui-monospace, monospace;
 			font-size: 10px;
 			transform: translateX(-50%);
 		}
-	}
-
-	.axis-caption {
-		display: flex;
-		justify-content: space-between;
-		margin-inline: 174px 140px;
-		color: var(--dot-muted);
-		font-family: 'IBM Plex Mono', ui-monospace, monospace;
-		font-size: 10px;
 	}
 
 	@media (max-width: 768px) {

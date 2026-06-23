@@ -3,7 +3,7 @@
 	import MobileLeaderboard from '$lib/components/MobileLeaderboard.svelte';
 	import {
 		buildForestRows,
-		MODELS,
+		getModelResults,
 		sortModels,
 		type SortMode,
 		type View
@@ -13,13 +13,15 @@
 		title: string;
 		description: string;
 		view: Extract<View, 'overview' | 'dataset'>;
+		datasetName?: string;
 		showIntro?: boolean;
 	}
 
-	let { title, description, view, showIntro = true }: Props = $props();
+	let { title, description, view, datasetName, showIntro = true }: Props = $props();
 	let sortMode = $state<SortMode>('delta');
 
-	let sortedModels = $derived(sortModels(MODELS, sortMode));
+	let models = $derived(getModelResults(datasetName));
+	let sortedModels = $derived(sortModels(models, sortMode));
 	let forestRows = $derived(buildForestRows(sortedModels));
 </script>
 

@@ -1,23 +1,8 @@
+import { DATASETS, MODELS, MODELS_BY_DATASET, type Dataset, type ModelResult } from '$lib/data';
+
 export type View = 'overview' | 'datasets' | 'dataset';
 export type SortMode = 'delta' | 'cost';
-
-export type ModelResult = {
-	name: string;
-	delta: number;
-	low: number;
-	high: number;
-	cost: number;
-};
-
-export type Dataset = {
-	name: string;
-	description: string;
-	citation: string;
-	icc: string;
-	models: number;
-	age: string;
-	meta: string;
-};
+export type { Dataset, ModelResult } from '$lib/data';
 
 export type ForestRow = {
 	name: string;
@@ -34,48 +19,9 @@ export type ForestRow = {
 export const X_MIN = -0.06;
 export const X_MAX = 0.2;
 
-export const MODELS: ModelResult[] = [
-	{ name: 'Gemini 3 Flash', delta: 0.108, low: 0.07, high: 0.14, cost: 14.13 },
-	{ name: 'Gemini 3.1 Pro', delta: 0.108, low: 0.05, high: 0.17, cost: 15.31 },
-	{ name: 'Grok 4', delta: 0.104, low: 0.03, high: 0.18, cost: 7.01 },
-	{ name: 'GPT-4o Search', delta: 0.093, low: 0.02, high: 0.16, cost: 4.14 },
-	{ name: 'Gemini 3.1 Flash Lite', delta: 0.092, low: 0.04, high: 0.14, cost: 14.07 },
-	{ name: 'Sonar Pro Search', delta: 0.07, low: 0.02, high: 0.12, cost: 1.74 },
-	{ name: 'Grok 4.2', delta: 0.052, low: 0.01, high: 0.09, cost: 6.25 },
-	{ name: 'GPT-5.4', delta: 0.039, low: -0.03, high: 0.11, cost: 3.88 },
-	{ name: 'Claude Opus 4.6', delta: 0.027, low: -0.02, high: 0.07, cost: 20.05 },
-	{ name: 'GPT-5.2 Pro', delta: 0.016, low: -0.06, high: 0.09, cost: 72.46 }
-];
+export { DATASETS, MODELS } from '$lib/data';
 
-export const DATASETS: Dataset[] = [
-	{
-		name: 'allen2024',
-		description: 'News-headline veracity ratings',
-		citation: 'Allen et al. (2024)',
-		icc: '0.76',
-		models: 10,
-		age: '~2 yr',
-		meta: 'Allen et al. (2024) · human ICC 0.76 · 10 models · news-headline veracity'
-	},
-	{
-		name: 'crowdtangle',
-		description: 'Social headline fact-checks',
-		citation: 'CrowdTangle set',
-		icc: '0.72',
-		models: 10,
-		age: '~3 yr',
-		meta: 'CrowdTangle set · human ICC 0.72 · 10 models · social headline fact-checks'
-	},
-	{
-		name: 'allen2021',
-		description: 'News-headline veracity ratings',
-		citation: 'Allen et al. (2021)',
-		icc: '0.54',
-		models: 10,
-		age: '~5 yr',
-		meta: 'Allen et al. (2021) · human ICC 0.54 · 10 models · news-headline veracity'
-	}
-];
+const MODEL_COSTS = new Map(MODELS.map((model) => [model.name, model.cost]));
 
 /**
  * Sort dashboard model rows by the selected metric.
@@ -96,10 +42,39 @@ export function sortModels(models: ModelResult[], sortMode: SortMode): ModelResu
 	const sorted = [...models];
 
 	if (sortMode === 'cost') {
-		return sorted.sort((a, b) => a.cost - b.cost);
+		return sorted.sort(
+			(a, b) => (a.cost ?? Number.POSITIVE_INFINITY) - (b.cost ?? Number.POSITIVE_INFINITY)
+		);
 	}
 
 	return sorted.sort((a, b) => b.delta - a.delta);
+}
+
+/**
+ * Get model rows for a specific leaderboard scope.
+ *
+ * Parameters
+ * ----------
+ * datasetName
+ *     Dataset route slug. When omitted, returns the pooled overview rows.
+ *
+ * Returns
+ * -------
+ * ModelResult[]
+ *     Raw model rows for the requested scope.
+ */
+export function getModelResults(datasetName?: string): ModelResult[] {
+	if (!datasetName) {
+		return MODELS;
+	}
+
+	return (MODELS_BY_DATASET[datasetName] ?? []).map((row) => ({
+		name: row.name,
+		delta: row.delta,
+		low: row.low,
+		high: row.high,
+		cost: MODEL_COSTS.get(row.name) ?? null
+	}));
 }
 
 /**
@@ -241,7 +216,7 @@ export function modelToForestRow(model: ModelResult, maxDelta: number): ForestRo
 		name: model.name,
 		estimate: formatDelta(model.delta),
 		interval: formatInterval(model.low, model.high),
-		cost: `$${model.cost.toFixed(2)}`,
+		cost: model.cost === null ? 'n/a' : `$${model.cost.toFixed(2)}`,
 		crossesParity: model.low < 0,
 		ciLeft: toPercent(left),
 		ciWidth: toPercent(right - left),
@@ -264,7 +239,7 @@ export function modelToForestRow(model: ModelResult, maxDelta: number): ForestRo
  *     Render-ready forest and mobile rows.
  */
 export function buildForestRows(models: ModelResult[]): ForestRow[] {
-	const maxDelta = Math.max(...MODELS.map((model) => model.delta));
+	const maxDelta = Math.max(...models.map((model) => model.delta));
 
 	return models.map((model) => modelToForestRow(model, maxDelta));
 }

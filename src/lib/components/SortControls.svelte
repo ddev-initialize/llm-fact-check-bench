@@ -8,27 +8,31 @@
 	}
 
 	let { sortMode, onSort, compact = false }: Props = $props();
+
+	function handleSortChange(event: Event): void {
+		const value =
+			event.currentTarget instanceof HTMLSelectElement
+				? event.currentTarget.value
+				: sortMode;
+
+		if (value === "delta" || value === "cost") {
+			onSort(value);
+		}
+	}
 </script>
 
-<div class={{ "control-row": true, compact }} aria-label="Sort leaderboard">
+<label class={{ "control-row": true, compact }}>
 	<span>Sort by</span>
-	<button
-		type="button"
-		class={{ active: sortMode === "delta" }}
-		aria-pressed={sortMode === "delta"}
-		onclick={() => onSort("delta")}
+	<select
+		value={sortMode}
+		onchange={handleSortChange}
+		aria-label="Sort leaderboard"
+		name="sort-leaderboard"
 	>
-		Δ ICC
-	</button>
-	<button
-		type="button"
-		class={{ active: sortMode === "cost" }}
-		aria-pressed={sortMode === "cost"}
-		onclick={() => onSort("cost")}
-	>
-		Cost
-	</button>
-</div>
+		<option value="delta">Δ ICC</option>
+		<option value="cost">Cost</option>
+	</select>
+</label>
 
 <style>
 	.control-row {
@@ -37,6 +41,8 @@
 		justify-content: end;
 		gap: 9px;
 		margin-block-end: 26px;
+		inline-size: fit-content;
+		margin-inline-start: auto;
 
 		&.compact {
 			margin-block: -4px 20px;
@@ -50,29 +56,16 @@
 			color: var(--muted);
 		}
 
-		button {
+		select {
 			border: 1px solid var(--line);
-			border-radius: 20px;
+			border-radius: 8px;
 			background: transparent;
 			color: var(--ink-soft);
-			padding: 7px 15px;
+			padding: 6px 20px 6px 10px;
 			font-size: 12.5px;
-			transition:
-				background 0.15s ease,
-				border-color 0.15s ease,
-				color 0.15s ease;
+			color-scheme: light dark;
 
-			&.active {
-				border-color: var(--ink);
-				background: var(--ink);
-				color: var(--bg);
-
-				&:hover {
-					background: var(--ink);
-				}
-			}
-
-			&:hover:not(.active) {
+			&:hover {
 				background: var(--hover);
 			}
 		}
