@@ -29,7 +29,6 @@ export type ForestPlot = {
 
 export { DATASETS, MODELS } from '$lib/data';
 
-const MODEL_COSTS = new Map(MODELS.map((model) => [model.name, model.cost]));
 const X_STEP = 0.06;
 
 /**
@@ -82,7 +81,7 @@ export function getModelResults(datasetName?: string): ModelResult[] {
 		delta: row.delta,
 		low: row.low,
 		high: row.high,
-		cost: MODEL_COSTS.get(row.name) ?? null
+		cost: row.cost
 	}));
 }
 
