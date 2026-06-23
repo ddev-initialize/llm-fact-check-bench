@@ -1,26 +1,31 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import { filterDatasets, type Dataset } from '$lib/dashboard';
+	import { resolve } from "$app/paths";
+	import { filterDatasets, type Dataset } from "$lib/dashboard";
 
 	interface Props {
 		datasets: Dataset[];
 	}
 
 	let { datasets }: Props = $props();
-	let query = $state('');
+	let query = $state("");
 	let filteredDatasets = $derived(filterDatasets(datasets, query));
 </script>
 
 <section aria-labelledby="datasets-title">
 	<h1 id="datasets-title">Datasets</h1>
 	<p class="lede">
-		Choose a benchmark to see how language models compare to human fact-checkers. Open a
-		dataset for the full breakdown.
+		Choose a benchmark to see how language models compare to human
+		fact-checkers. Open a dataset for the full breakdown.
 	</p>
 
 	<search class="dataset-search">
 		<label for="dataset-query">Search datasets</label>
-		<input id="dataset-query" type="search" bind:value={query} placeholder="Search datasets" />
+		<input
+			id="dataset-query"
+			type="search"
+			bind:value={query}
+			placeholder="Search datasets"
+		/>
 	</search>
 
 	<div class="dataset-table" role="region" aria-label="Datasets">
@@ -32,12 +37,18 @@
 			<span></span>
 		</div>
 		{#each filteredDatasets as dataset (dataset.name)}
-			<a class="dataset-row" href={resolve('/datasets/[slug]', { slug: dataset.name })}>
+			<a
+				class="dataset-row"
+				href={resolve("/datasets/[slug]", { slug: dataset.name })}
+			>
 				<span>
 					<strong>{dataset.name}</strong>
 					<small>{dataset.description}</small>
 				</span>
-				<span>{dataset.citation} <small>· human ICC {dataset.icc}</small></span>
+				<span
+					>{dataset.citation}
+					<small>· human ICC {dataset.icc}</small></span
+				>
 				<span>{dataset.models}</span>
 				<span>{dataset.age}</span>
 				<span class="arrow" aria-hidden="true">›</span>
@@ -52,7 +63,7 @@
 	section {
 		h1 {
 			margin: 0 0 8px;
-			font-family: 'Newsreader', ui-serif, Georgia, serif;
+			font-family: "Newsreader", ui-serif, Georgia, serif;
 			font-size: 30px;
 			font-weight: 600;
 			letter-spacing: 0;
@@ -82,7 +93,7 @@
 		}
 
 		input {
-			inline-size: min(100%, 34rem);
+			inline-size: min(100%, 26rem);
 			border: 1px solid var(--line);
 			border-radius: 11px;
 			background: var(--panel);
@@ -115,7 +126,7 @@
 		border-block-end: 1px solid var(--line);
 
 		span {
-			font-family: 'IBM Plex Mono', ui-monospace, monospace;
+			font-family: "IBM Plex Mono", ui-monospace, monospace;
 			font-size: 10.5px;
 			letter-spacing: 0.1em;
 			text-transform: uppercase;
@@ -140,7 +151,7 @@
 		strong {
 			display: block;
 			color: var(--ink);
-			font-family: 'IBM Plex Mono', ui-monospace, monospace;
+			font-family: "IBM Plex Mono", ui-monospace, monospace;
 			font-size: 14.5px;
 			font-weight: 500;
 		}
@@ -158,7 +169,7 @@
 
 		> span:nth-child(3) {
 			color: var(--ink);
-			font-family: 'IBM Plex Mono', ui-monospace, monospace;
+			font-family: "IBM Plex Mono", ui-monospace, monospace;
 			font-size: 14px;
 		}
 	}

@@ -16,12 +16,21 @@ export type ForestRow = {
 	barWidth: string;
 };
 
-export const X_MIN = -0.06;
-export const X_MAX = 0.2;
+export type AxisTick = {
+	value: string;
+	left: string;
+};
+
+export type ForestPlot = {
+	rows: ForestRow[];
+	ticks: AxisTick[];
+	parityLeft: string;
+};
 
 export { DATASETS, MODELS } from '$lib/data';
 
 const MODEL_COSTS = new Map(MODELS.map((model) => [model.name, model.cost]));
+const X_STEP = 0.06;
 
 /**
  * Sort dashboard model rows by the selected metric.
@@ -176,6 +185,40 @@ export function toPercent(value: number): string {
 	return `${Math.max(0, Math.min(100, value * 100)).toFixed(2)}%`;
 }
 
+type ChartBounds = {
+	min: number;
+	max: number;
+};
+
+function buildChartBounds(models: ModelResult[]): ChartBounds {
+	if (models.length === 0) {
+		return { min: -X_STEP, max: X_STEP };
+	}
+
+	const low = Math.min(0, ...models.map((model) => model.low));
+	const high = Math.max(0, ...models.map((model) => model.high));
+	const min = Math.floor(low / X_STEP) * X_STEP;
+	const max = Math.ceil(high / X_STEP) * X_STEP;
+
+	return {
+		min: min === 0 ? -X_STEP : min,
+		max: max === 0 ? X_STEP : max
+	};
+}
+
+function buildAxisTicks(bounds: ChartBounds): AxisTick[] {
+	const tickCount = Math.round((bounds.max - bounds.min) / X_STEP) + 1;
+
+	return Array.from({ length: tickCount }, (_, index) => {
+		const value = Number((bounds.min + index * X_STEP).toFixed(2));
+
+		return {
+			value: value.toFixed(2),
+			left: toPercent(deltaPosition(value, bounds))
+		};
+	});
+}
+
 /**
  * Map an ICC delta value to the chart's horizontal scale.
  *
@@ -189,8 +232,8 @@ export function toPercent(value: number): string {
  * number
  *     Position ratio on the forest plot axis.
  */
-export function deltaPosition(value: number): number {
-	return (value - X_MIN) / (X_MAX - X_MIN);
+function deltaPosition(value: number, bounds: ChartBounds): number {
+	return (value - bounds.min) / (bounds.max - bounds.min);
 }
 
 /**
@@ -200,6 +243,8 @@ export function deltaPosition(value: number): number {
  * ----------
  * model
  *     Raw model result.
+ * bounds
+ *     Chart bounds used to position estimates and intervals.
  * maxDelta
  *     Maximum delta used to scale mobile bars.
  *
@@ -208,9 +253,9 @@ export function deltaPosition(value: number): number {
  * ForestRow
  *     Render-ready row values.
  */
-export function modelToForestRow(model: ModelResult, maxDelta: number): ForestRow {
-	const left = deltaPosition(model.low);
-	const right = deltaPosition(model.high);
+function modelToForestRow(model: ModelResult, bounds: ChartBounds, maxDelta: number): ForestRow {
+	const left = deltaPosition(model.low, bounds);
+	const right = deltaPosition(model.high, bounds);
 
 	return {
 		name: model.name,
@@ -220,13 +265,13 @@ export function modelToForestRow(model: ModelResult, maxDelta: number): ForestRo
 		crossesParity: model.low < 0,
 		ciLeft: toPercent(left),
 		ciWidth: toPercent(right - left),
-		pointLeft: toPercent(deltaPosition(model.delta)),
+		pointLeft: toPercent(deltaPosition(model.delta, bounds)),
 		barWidth: toPercent(model.delta / maxDelta)
 	};
 }
 
 /**
- * Build render-ready rows for the leaderboard views.
+ * Build render-ready plot data for the leaderboard views.
  *
  * Parameters
  * ----------
@@ -235,11 +280,16 @@ export function modelToForestRow(model: ModelResult, maxDelta: number): ForestRo
  *
  * Returns
  * -------
- * ForestRow[]
- *     Render-ready forest and mobile rows.
+ * ForestPlot
+ *     Render-ready rows and axis values.
  */
-export function buildForestRows(models: ModelResult[]): ForestRow[] {
-	const maxDelta = Math.max(...models.map((model) => model.delta));
+export function buildForestPlot(models: ModelResult[]): ForestPlot {
+	const bounds = buildChartBounds(models);
+	const maxDelta = Math.max(0, ...models.map((model) => model.delta));
 
-	return models.map((model) => modelToForestRow(model, maxDelta));
+	return {
+		rows: models.map((model) => modelToForestRow(model, bounds, maxDelta)),
+		ticks: buildAxisTicks(bounds),
+		parityLeft: toPercent(deltaPosition(0, bounds))
+	};
 }

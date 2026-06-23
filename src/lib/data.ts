@@ -117,12 +117,6 @@ export const MODELS_BY_DATASET: Record<string, Omit<ModelResult, 'cost'>[]> = {
 			"high": 0.136833064430922
 		},
 		{
-			"name": "Mode of models (ensemble)",
-			"delta": 0.167393089786772,
-			"low": 0.110081736747573,
-			"high": 0.223010391379435
-		},
-		{
 			"name": "Sonar Pro Search",
 			"delta": 0.113938224781851,
 			"low": 0.050480390464639,
@@ -185,12 +179,6 @@ export const MODELS_BY_DATASET: Record<string, Omit<ModelResult, 'cost'>[]> = {
 			"high": 0.139319806475207
 		},
 		{
-			"name": "Mode of models (ensemble)",
-			"delta": 0.0763644995338247,
-			"low": -0.00219073623047635,
-			"high": 0.156326445850093
-		},
-		{
 			"name": "Sonar Pro Search",
 			"delta": 0.0477444952807993,
 			"low": -0.0355886584611637,
@@ -251,12 +239,6 @@ export const MODELS_BY_DATASET: Record<string, Omit<ModelResult, 'cost'>[]> = {
 			"delta": 0.0263034442988656,
 			"low": -0.0400415219903455,
 			"high": 0.0863817805194843
-		},
-		{
-			"name": "Mode of models (ensemble)",
-			"delta": 0.0789411864790501,
-			"low": 0.00405224666690408,
-			"high": 0.142101381932795
 		},
 		{
 			"name": "Sonar Pro Search",

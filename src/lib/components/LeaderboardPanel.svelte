@@ -1,21 +1,15 @@
 <script lang="ts">
-	import {
-		deltaPosition,
-		toPercent,
-		type ForestRow,
-		type View,
-	} from "$lib/dashboard";
 	import SortControls from "$lib/components/SortControls.svelte";
-	import type { SortMode } from "$lib/dashboard";
+	import type { ForestPlot, SortMode, View } from "$lib/dashboard";
 
 	interface Props {
-		rows: ForestRow[];
+		plot: ForestPlot;
 		sortMode: SortMode;
 		view: View;
 		onSort: (sortMode: SortMode) => void;
 	}
 
-	let { rows, sortMode, view, onSort }: Props = $props();
+	let { plot, sortMode, view, onSort }: Props = $props();
 </script>
 
 <section class="panel leaderboard-panel" aria-labelledby="leaderboard-title">
@@ -53,12 +47,12 @@
 			<div class="parity-track">
 				<span
 					class="parity-line"
-					style:--left={toPercent(deltaPosition(0))}
+					style:--left={plot.parityLeft}
 				></span>
 			</div>
 			<div></div>
 		</div>
-		{#each rows as row (row.name)}
+		{#each plot.rows as row (row.name)}
 			<div class="forest-row">
 				<div class="model-name">{row.name}</div>
 				<div class="interval-track">
@@ -88,10 +82,8 @@
 	<div class="axis-row" aria-hidden="true">
 		<div></div>
 		<div class="axis-ticks">
-			{#each [-0.06, 0, 0.06, 0.12, 0.18] as tick (tick)}
-				<span style:--left={toPercent(deltaPosition(tick))}
-					>{tick.toFixed(2)}</span
-				>
+			{#each plot.ticks as tick (tick.value)}
+				<span style:--left={tick.left}>{tick.value}</span>
 			{/each}
 		</div>
 		<div></div>

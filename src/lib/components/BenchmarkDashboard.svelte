@@ -2,7 +2,7 @@
 	import LeaderboardPanel from '$lib/components/LeaderboardPanel.svelte';
 	import MobileLeaderboard from '$lib/components/MobileLeaderboard.svelte';
 	import {
-		buildForestRows,
+		buildForestPlot,
 		getModelResults,
 		sortModels,
 		type SortMode,
@@ -22,7 +22,7 @@
 
 	let models = $derived(getModelResults(datasetName));
 	let sortedModels = $derived(sortModels(models, sortMode));
-	let forestRows = $derived(buildForestRows(sortedModels));
+	let forestPlot = $derived(buildForestPlot(sortedModels));
 </script>
 
 {#if showIntro}
@@ -33,12 +33,17 @@
 {/if}
 
 <LeaderboardPanel
-	rows={forestRows}
+	plot={forestPlot}
 	{sortMode}
 	{view}
 	onSort={(nextMode) => (sortMode = nextMode)}
 />
-<MobileLeaderboard rows={forestRows} {sortMode} {view} onSort={(nextMode) => (sortMode = nextMode)} />
+<MobileLeaderboard
+	rows={forestPlot.rows}
+	{sortMode}
+	{view}
+	onSort={(nextMode) => (sortMode = nextMode)}
+/>
 
 <style>
 	section {
