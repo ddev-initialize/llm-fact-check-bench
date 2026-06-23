@@ -1,6 +1,5 @@
 export type View = 'overview' | 'datasets' | 'dataset';
 export type SortMode = 'delta' | 'cost';
-export type ScaleMode = 'log' | 'linear';
 
 export type ModelResult = {
 	name: string;
@@ -32,24 +31,8 @@ export type ForestRow = {
 	barWidth: string;
 };
 
-export type Tick = {
-	value: number;
-	label: string;
-	left?: string;
-	bottom?: string;
-};
-
-export type CostTableRow = {
-	name: string;
-	delta: string;
-	interval: string;
-	cost: string;
-};
-
 export const X_MIN = -0.06;
 export const X_MAX = 0.2;
-export const Y_MAX = 0.13;
-export const LINEAR_COST_MAX = 80;
 
 export const MODELS: ModelResult[] = [
 	{ name: 'Gemini 3 Flash', delta: 0.108, low: 0.07, high: 0.14, cost: 14.13 },
@@ -236,29 +219,6 @@ export function deltaPosition(value: number): number {
 }
 
 /**
- * Map a model cost to the current scatterplot x scale.
- *
- * Parameters
- * ----------
- * cost
- *     Dollars per 100 fact-checks.
- * scaleMode
- *     Active cost scale.
- *
- * Returns
- * -------
- * number
- *     Position ratio on the scatterplot axis.
- */
-export function costPosition(cost: number, scaleMode: ScaleMode): number {
-	if (scaleMode === 'linear') {
-		return cost / LINEAR_COST_MAX;
-	}
-
-	return Math.log10(cost) / 2;
-}
-
-/**
  * Build display data for one forest plot row.
  *
  * Parameters
@@ -307,67 +267,4 @@ export function buildForestRows(models: ModelResult[]): ForestRow[] {
 	const maxDelta = Math.max(...MODELS.map((model) => model.delta));
 
 	return models.map((model) => modelToForestRow(model, maxDelta));
-}
-
-/**
- * Build y-axis ticks for the cost chart.
- *
- * Returns
- * -------
- * Tick[]
- *     Scatterplot y ticks with CSS positions.
- */
-export function buildYTicks(): Tick[] {
-	return [0, 0.04, 0.08, 0.12].map((value) => ({
-		value,
-		label: value.toFixed(2),
-		bottom: toPercent(value / Y_MAX)
-	}));
-}
-
-/**
- * Build x-axis ticks for the selected cost scale.
- *
- * Parameters
- * ----------
- * scaleMode
- *     Active cost scale.
- *
- * Returns
- * -------
- * Tick[]
- *     Scatterplot x ticks with CSS positions.
- */
-export function buildXTicks(scaleMode: ScaleMode): Tick[] {
-	const values = scaleMode === 'linear' ? [0, 20, 40, 60, 80] : [1, 10, 100];
-
-	return values.map((value) => ({
-		value,
-		label: `$${value}`,
-		left: toPercent(costPosition(value, scaleMode))
-	}));
-}
-
-/**
- * Build model rows for the mobile cost table.
- *
- * Parameters
- * ----------
- * models
- *     Raw model result rows.
- *
- * Returns
- * -------
- * CostTableRow[]
- *     Render-ready mobile cost table rows.
- */
-export function buildCostTableRows(models: ModelResult[]): CostTableRow[] {
-	return [...models]
-		.sort((a, b) => a.cost - b.cost)
-		.map((model) => ({
-			name: model.name,
-			delta: formatDelta(model.delta),
-			interval: formatInterval(model.low, model.high),
-			cost: `$${model.cost.toFixed(2)}`
-		}));
 }
