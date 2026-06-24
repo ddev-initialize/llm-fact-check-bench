@@ -22,7 +22,6 @@
 					: 'Models by agreement gain. Bar shows the point estimate.'}
 			</p>
 		</div>
-		<span>{view === 'dataset' ? 'This dataset' : 'Ranked'}</span>
 	</div>
 
 	<SortControls {sortMode} {onSort} compact />
@@ -82,13 +81,6 @@
 			line-height: 1.5;
 		}
 
-		> span {
-			font-family: 'IBM Plex Mono', ui-monospace, monospace;
-			font-size: 10.5px;
-			letter-spacing: 0.1em;
-			text-transform: uppercase;
-			color: var(--muted);
-		}
 	}
 
 	.rank-list {
@@ -101,7 +93,7 @@
 			display: grid;
 			grid-template-columns: 24px minmax(0, 1fr) auto;
 			gap: 14px;
-			align-items: center;
+			align-items: start;
 			padding-block: 13px;
 			border-block-end: 1px solid var(--line-soft);
 		}
@@ -148,6 +140,7 @@
 
 	.mobile-estimate {
 		display: grid;
+		align-self: start;
 		color: var(--ink);
 		font-size: 13px;
 		line-height: 1.5;
@@ -170,6 +163,10 @@
 		.panel-heading {
 			align-items: flex-start;
 			flex-direction: column;
+		}
+
+		.rank-list li:first-child {
+			border-block-start: 1px solid var(--line-soft);
 		}
 	}
 </style>

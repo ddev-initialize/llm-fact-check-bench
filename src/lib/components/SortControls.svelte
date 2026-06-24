@@ -30,7 +30,7 @@
 		name="sort-leaderboard"
 	>
 		<option value="delta">Δ ICC</option>
-		<option value="cost">Cost</option>
+		<option value="cost">Cost (low to high)</option>
 	</select>
 </label>
 
@@ -45,7 +45,7 @@
 		margin-inline-start: auto;
 
 		&.compact {
-			margin-block: -4px 20px;
+			margin-block: -4px 16px;
 		}
 
 		span {

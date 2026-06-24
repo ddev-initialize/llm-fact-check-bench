@@ -1,10 +1,12 @@
 <script lang="ts">
+	import CostPanel from '$lib/components/CostPanel.svelte';
 	import LeaderboardPanel from '$lib/components/LeaderboardPanel.svelte';
 	import MobileLeaderboard from '$lib/components/MobileLeaderboard.svelte';
 	import {
 		buildForestPlot,
 		getModelResults,
 		sortModels,
+		type ScaleMode,
 		type SortMode,
 		type View
 	} from '$lib/dashboard';
@@ -19,6 +21,7 @@
 
 	let { title, description, view, datasetName, showIntro = true }: Props = $props();
 	let sortMode = $state<SortMode>('delta');
+	let scaleMode = $state<ScaleMode>('log');
 
 	let models = $derived(getModelResults(datasetName));
 	let sortedModels = $derived(sortModels(models, sortMode));
@@ -43,6 +46,12 @@
 	{sortMode}
 	{view}
 	onSort={(nextMode) => (sortMode = nextMode)}
+/>
+<CostPanel
+	{models}
+	{scaleMode}
+	{view}
+	onScale={(nextMode) => (scaleMode = nextMode)}
 />
 
 <style>

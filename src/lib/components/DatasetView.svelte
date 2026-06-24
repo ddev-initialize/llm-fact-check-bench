@@ -31,9 +31,10 @@
 	<div class="dataset-table" role="region" aria-label="Datasets">
 		<div class="dataset-head" aria-hidden="true">
 			<span>Dataset</span>
-			<span>Source</span>
-			<span>Models</span>
-			<span>Age</span>
+			<span class="dataset-meta-head">
+				<span>Source</span>
+				<span>Age</span>
+			</span>
 			<span></span>
 		</div>
 		{#each filteredDatasets as dataset (dataset.name)}
@@ -45,12 +46,23 @@
 					<strong>{dataset.name}</strong>
 					<small>{dataset.description}</small>
 				</span>
-				<span
-					>{dataset.citation}
-					<small>· human ICC {dataset.icc}</small></span
-				>
-				<span>{dataset.models}</span>
-				<span>{dataset.age}</span>
+				<span class="dataset-meta">
+					<span class="dataset-source">
+						<span>
+							<small class="mobile-label">Source</small>
+							{dataset.citation}
+						</span>
+						<span>
+							<small class="mobile-label">Human ICC</small>
+							<small class="desktop-icc">· human ICC {dataset.icc}</small>
+							<span class="mobile-value">{dataset.icc}</span>
+						</span>
+					</span>
+					<span class="dataset-age">
+						<small class="mobile-label">Dataset age</small>
+						{dataset.age}
+					</span>
+				</span>
 				<span class="arrow" aria-hidden="true">›</span>
 			</a>
 		{:else}
@@ -116,7 +128,7 @@
 	.dataset-head,
 	.dataset-row {
 		display: grid;
-		grid-template-columns: 1.7fr 1.5fr 0.5fr 0.55fr 24px;
+		grid-template-columns: 1.7fr 2.25fr 24px;
 		gap: 18px;
 		align-items: center;
 	}
@@ -167,11 +179,28 @@
 			margin-block-start: 4px;
 		}
 
-		> span:nth-child(3) {
+		.dataset-age {
 			color: var(--ink);
 			font-family: "IBM Plex Mono", ui-monospace, monospace;
 			font-size: 14px;
 		}
+	}
+
+	.dataset-source {
+		display: block;
+	}
+
+	.dataset-meta,
+	.dataset-meta-head {
+		display: grid;
+		grid-template-columns: minmax(0, 1.7fr) minmax(72px, 0.55fr);
+		gap: 18px;
+		align-items: center;
+	}
+
+	.dataset-row .mobile-label,
+	.mobile-value {
+		display: none;
 	}
 
 	.arrow {
@@ -196,17 +225,58 @@
 			grid-template-columns: minmax(0, 1fr) 24px;
 			gap: 10px 14px;
 
-			> span:nth-child(2),
-			> span:nth-child(3),
-			> span:nth-child(4) {
+			.dataset-meta {
 				grid-column: 1;
+				grid-template-columns: 1fr;
+				gap: 12px;
+				color: var(--ink-soft);
+				font-size: 12.5px;
+				line-height: 1.4;
+			}
+
+			.dataset-source {
+				display: grid;
+				grid-template-columns: 1fr;
+				gap: 12px;
+			}
+
+			.dataset-source > span,
+			.dataset-age {
+				display: grid;
+				gap: 2px;
+			}
+
+			.dataset-age {
+				color: var(--ink-soft);
+				font-size: 12.5px;
+			}
+
+			.mobile-label {
+				display: block;
+				color: var(--ink-soft);
+				font-family: "IBM Plex Mono", ui-monospace, monospace;
+				font-size: 9.5px;
+				font-weight: 500;
+				letter-spacing: 0.1em;
+				line-height: 1.2;
+				text-transform: uppercase;
+			}
+
+			.desktop-icc {
+				display: none;
+			}
+
+			.mobile-value {
+				display: inline;
+				color: var(--ink-soft);
 			}
 
 			.arrow {
 				grid-column: 2;
-				grid-row: 1 / span 4;
+				grid-row: 1 / span 2;
 				align-self: center;
 			}
 		}
 	}
+
 </style>

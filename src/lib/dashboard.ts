@@ -2,6 +2,7 @@ import { DATASETS, MODELS, MODELS_BY_DATASET, type Dataset, type ModelResult } f
 
 export type View = 'overview' | 'datasets' | 'dataset';
 export type SortMode = 'delta' | 'cost';
+export type ScaleMode = 'log' | 'linear';
 export type { Dataset, ModelResult } from '$lib/data';
 
 export type ForestRow = {
@@ -27,9 +28,41 @@ export type ForestPlot = {
 	parityLeft: string;
 };
 
+export type CostPoint = {
+	name: string;
+	costLabel: string;
+	deltaLabel: string;
+	left: string;
+	bottom: string;
+	muted: boolean;
+};
+
+export type DeltaTick = {
+	value: string;
+	bottom: string;
+	isZero: boolean;
+};
+
+export type CostPlot = {
+	points: CostPoint[];
+	xTicks: AxisTick[];
+	yTicks: DeltaTick[];
+	zeroBottom: string;
+};
+
+export type CostTableRow = {
+	name: string;
+	delta: string;
+	cost: string;
+	significantOverZero: boolean;
+};
+
 export { DATASETS, MODELS } from '$lib/data';
 
 const X_STEP = 0.06;
+const COST_STEP = 20;
+const COST_LOG_TICKS = [1, 2, 5, 10, 20, 50, 100, 200];
+const DELTA_STEP = 0.04;
 
 /**
  * Sort dashboard model rows by the selected metric.
@@ -168,6 +201,27 @@ export function formatInterval(low: number, high: number): string {
 }
 
 /**
+ * Format a model cost for dashboard display.
+ *
+ * Parameters
+ * ----------
+ * value
+ *     Cost per 100 fact-checks, or null when no estimate is available.
+ *
+ * Returns
+ * -------
+ * string
+ *     Currency label for tables and chart labels.
+ */
+export function formatCost(value: number | null): string {
+	if (value === null) {
+		return 'n/a';
+	}
+
+	return `$${value.toFixed(value < 10 ? 2 : 1)}`;
+}
+
+/**
  * Convert a ratio to a clamped CSS percentage.
  *
  * Parameters
@@ -260,7 +314,7 @@ function modelToForestRow(model: ModelResult, bounds: ChartBounds, maxDelta: num
 		name: model.name,
 		estimate: formatDelta(model.delta),
 		interval: formatInterval(model.low, model.high),
-		cost: model.cost === null ? 'n/a' : `$${model.cost.toFixed(2)}`,
+		cost: formatCost(model.cost),
 		crossesParity: model.low < 0,
 		ciLeft: toPercent(left),
 		ciWidth: toPercent(right - left),
@@ -291,4 +345,132 @@ export function buildForestPlot(models: ModelResult[]): ForestPlot {
 		ticks: buildAxisTicks(bounds),
 		parityLeft: toPercent(deltaPosition(0, bounds))
 	};
+}
+
+function numericCostRows(models: ModelResult[]): (ModelResult & { cost: number })[] {
+	return models.filter((model): model is ModelResult & { cost: number } => model.cost !== null);
+}
+
+function buildCostMax(models: ModelResult[]): number {
+	const costs = numericCostRows(models).map((model) => model.cost);
+	const max = Math.max(COST_STEP, ...costs);
+
+	return Math.ceil(max / COST_STEP) * COST_STEP;
+}
+
+function costPosition(value: number, maxCost: number, scaleMode: ScaleMode): number {
+	if (scaleMode === 'linear') {
+		return value / maxCost;
+	}
+
+	return Math.log10(Math.max(1, value)) / Math.log10(maxCost);
+}
+
+function buildCostTicks(maxCost: number, scaleMode: ScaleMode): AxisTick[] {
+	if (scaleMode === 'linear') {
+		const tickCount = Math.floor(maxCost / COST_STEP) + 1;
+
+		return Array.from({ length: tickCount }, (_, index) => {
+			const value = index * COST_STEP;
+
+			return {
+				value: `$${value}`,
+				left: toPercent(value / maxCost)
+			};
+		});
+	}
+
+	return COST_LOG_TICKS.filter((value) => value <= maxCost).map((value) => ({
+		value: `$${value}`,
+		left: toPercent(costPosition(value, maxCost, scaleMode))
+	}));
+}
+
+function buildDeltaBounds(models: ModelResult[]): ChartBounds {
+	if (models.length === 0) {
+		return { min: 0, max: DELTA_STEP };
+	}
+
+	const min =
+		Math.floor(Math.min(0, ...models.map((model) => model.delta)) / DELTA_STEP) * DELTA_STEP;
+	const max =
+		Math.ceil(Math.max(0, ...models.map((model) => model.delta)) / DELTA_STEP) * DELTA_STEP;
+
+	return {
+		min,
+		max: max === min ? min + DELTA_STEP : max
+	};
+}
+
+function buildDeltaTicks(bounds: ChartBounds): DeltaTick[] {
+	const tickCount = Math.round((bounds.max - bounds.min) / DELTA_STEP) + 1;
+
+	return Array.from({ length: tickCount }, (_, index) => {
+		const value = Number((bounds.min + index * DELTA_STEP).toFixed(2));
+
+		return {
+			value: value.toFixed(2),
+			bottom: toPercent(deltaPosition(value, bounds)),
+			isZero: value === 0
+		};
+	});
+}
+
+/**
+ * Build the cost scatter plot for the current dashboard scope.
+ *
+ * Parameters
+ * ----------
+ * models
+ *     Model rows for the overview or a single dataset.
+ * scaleMode
+ *     Horizontal cost scale.
+ *
+ * Returns
+ * -------
+ * CostPlot
+ *     Positioned points and axis ticks for the cost panel.
+ */
+export function buildCostPlot(models: ModelResult[], scaleMode: ScaleMode): CostPlot {
+	const costRows = numericCostRows(models);
+	const maxCost = buildCostMax(costRows);
+	const deltaBounds = buildDeltaBounds(costRows);
+
+	return {
+		points: costRows.map((model) => ({
+			name: model.name,
+			costLabel: formatCost(model.cost),
+			deltaLabel: formatDelta(model.delta),
+			left: toPercent(costPosition(model.cost, maxCost, scaleMode)),
+			bottom: toPercent(deltaPosition(model.delta, deltaBounds)),
+			muted: model.low < 0
+		})),
+		xTicks: buildCostTicks(maxCost, scaleMode),
+		yTicks: buildDeltaTicks(deltaBounds),
+		zeroBottom: toPercent(deltaPosition(0, deltaBounds))
+	};
+}
+
+/**
+ * Build the mobile cost table for the current dashboard scope.
+ *
+ * Parameters
+ * ----------
+ * models
+ *     Model rows for the overview or a single dataset.
+ *
+ * Returns
+ * -------
+ * CostTableRow[]
+ *     Rows sorted by ascending cost, with models lacking cost estimates last.
+ */
+export function buildCostTableRows(models: ModelResult[]): CostTableRow[] {
+	return [...models]
+		.sort((a, b) => (a.cost ?? Number.POSITIVE_INFINITY) - (b.cost ?? Number.POSITIVE_INFINITY))
+		.map((model) => ({
+			name: model.name,
+			delta: formatDelta(model.delta),
+			cost: formatCost(model.cost),
+			significantOverZero: model.low > 0
+		}));
 }
